@@ -52,6 +52,7 @@
 #include "SendFilePartResponse.h"
 #include "SessionSetupPacket.h"
 #include "SessionSetupResponse.h"
+#include "Lz4Compressed.h"
 
 // Future versions of libusb will use usb_interface instead of interface.
 #ifndef usb_interface
@@ -984,6 +985,11 @@ int BridgeManager::DownloadPitFile(unsigned char **pitBuffer) const
 
 bool BridgeManager::SendFile(FILE *file, unsigned int destination, unsigned int deviceType, unsigned int fileIdentifier) const
 {
+	bool isCompressed = isLz4Compressed(file);
+	if (isCompressed) {
+		Interface::Print("Requesting compressed flash.\n");
+	}
+
 	if (destination != EndFileTransferPacket::kDestinationModem && destination != EndFileTransferPacket::kDestinationPhone)
 	{
 		Interface::PrintError("Attempted to send file to unknown destination!\n");
@@ -996,7 +1002,13 @@ bool BridgeManager::SendFile(FILE *file, unsigned int destination, unsigned int 
 		return (false);
 	}
 
-	FileTransferPacket *flashFileTransferPacket = new FileTransferPacket(FileTransferPacket::kRequestFlash);
+
+	unsigned int request = FileTransferPacket::kRequestFlash;
+	if (isCompressed) {
+		request = FileTransferPacket::kRequestCompressedFlash;
+	}
+	FileTransferPacket *flashFileTransferPacket = new FileTransferPacket(request);
+
 	bool success = SendPacket(flashFileTransferPacket, kDefaultTimeoutSend, kEmptyTransferNone);
 	delete flashFileTransferPacket;
 
@@ -1046,7 +1058,7 @@ bool BridgeManager::SendFile(FILE *file, unsigned int destination, unsigned int 
 		unsigned int sequenceSize = (isLastSequence) ? lastSequenceSize : fileTransferSequenceMaxLength;
 		unsigned int sequenceTotalByteCount = sequenceSize * fileTransferPacketSize;
 
-		FlashPartFileTransferPacket *beginFileTransferPacket = new FlashPartFileTransferPacket(sequenceTotalByteCount);
+		FlashPartFileTransferPacket *beginFileTransferPacket = new FlashPartFileTransferPacket(sequenceTotalByteCount, isCompressed);
 		success = SendPacket(beginFileTransferPacket, kDefaultTimeoutSend, kEmptyTransferNone);
 		delete beginFileTransferPacket;
 
@@ -1173,7 +1185,7 @@ bool BridgeManager::SendFile(FILE *file, unsigned int destination, unsigned int 
 
 		if (destination == EndFileTransferPacket::kDestinationPhone)
 		{
-			EndPhoneFileTransferPacket *endPhoneFileTransferPacket = new EndPhoneFileTransferPacket(sequenceEffectiveByteCount, 0, deviceType, fileIdentifier, isLastSequence);
+			EndPhoneFileTransferPacket *endPhoneFileTransferPacket = new EndPhoneFileTransferPacket(sequenceEffectiveByteCount, 0, deviceType, fileIdentifier, isLastSequence, isCompressed);
 
 			success = SendPacket(endPhoneFileTransferPacket, kDefaultTimeoutSend, kEmptyTransferBeforeAndAfter);
 			delete endPhoneFileTransferPacket;
@@ -1187,7 +1199,7 @@ bool BridgeManager::SendFile(FILE *file, unsigned int destination, unsigned int 
 		}
 		else // destination == EndFileTransferPacket::kDestinationModem
 		{
-			EndModemFileTransferPacket *endModemFileTransferPacket = new EndModemFileTransferPacket(sequenceEffectiveByteCount, 0, deviceType, isLastSequence);
+			EndModemFileTransferPacket *endModemFileTransferPacket = new EndModemFileTransferPacket(sequenceEffectiveByteCount, 0, deviceType, isLastSequence, isCompressed);
 
 			success = SendPacket(endModemFileTransferPacket, kDefaultTimeoutSend, kEmptyTransferBeforeAndAfter);
 			delete endModemFileTransferPacket;

@@ -35,7 +35,10 @@ namespace Heimdall
 				kRequestFlash		= 0x00,
 				kRequestDump		= 0x01,
 				kRequestPart		= 0x02,
-				kRequestEnd			= 0x03
+				kRequestEnd		= 0x03,
+				kRequestCompressedFlash = 0x05,
+				kRequestCompressedPart  = 0x06,
+				kRequestCompressedEnd   = 0x07
 			};
 
 		protected:

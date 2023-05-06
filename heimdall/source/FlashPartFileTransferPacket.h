@@ -34,8 +34,8 @@ namespace Heimdall
 
 		public:
 
-			FlashPartFileTransferPacket(unsigned int sequenceByteCount)
-				: FileTransferPacket(FileTransferPacket::kRequestPart)
+			FlashPartFileTransferPacket(unsigned int sequenceByteCount, int isCompressed)
+				: FileTransferPacket(isCompressed == 1 ? FileTransferPacket::kRequestCompressedPart : FileTransferPacket::kRequestPart)
 			{
 				this->sequenceByteCount = sequenceByteCount;
 			}

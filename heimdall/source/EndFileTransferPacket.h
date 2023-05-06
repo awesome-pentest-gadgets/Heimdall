@@ -52,8 +52,8 @@ namespace Heimdall
 
 		protected:
 
-			EndFileTransferPacket(unsigned int destination, unsigned int sequenceByteCount, unsigned int unknown1, unsigned int deviceType)
-				: FileTransferPacket(FileTransferPacket::kRequestEnd)
+			EndFileTransferPacket(unsigned int destination, unsigned int sequenceByteCount, unsigned int unknown1, unsigned int deviceType, int isCompressed)
+				: FileTransferPacket(isCompressed == 1 ? FileTransferPacket::kRequestCompressedEnd : FileTransferPacket::kRequestEnd)
 			{
 				this->destination = destination;
 				this->sequenceByteCount = sequenceByteCount;

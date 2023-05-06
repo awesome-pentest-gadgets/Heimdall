@@ -58,8 +58,8 @@ namespace Heimdall
 		public:
 
 			EndPhoneFileTransferPacket(unsigned int sequenceByteCount, unsigned int unknown1, unsigned int chipIdentifier,
-				unsigned int fileIdentifier, bool endOfFile)
-				: EndFileTransferPacket(EndFileTransferPacket::kDestinationPhone, sequenceByteCount, unknown1, chipIdentifier)
+				unsigned int fileIdentifier, bool endOfFile, int isCompressed)
+				: EndFileTransferPacket(EndFileTransferPacket::kDestinationPhone, sequenceByteCount, unknown1, chipIdentifier, isCompressed)
 			{
 				this->fileIdentifier = fileIdentifier;
 				this->endOfFile = (endOfFile) ? 1 : 0;
