@@ -312,16 +312,11 @@ bool BridgeManager::InitialiseProtocol(void)
 	memcpy(dataBuffer, "ODIN", 4);
 	memset(dataBuffer + 4, 0, 1);
 
-#ifdef OS_LINUX
-	if (IsUbuntu())
+	Interface::Print("Resetting device...\n");
+	if (libusb_reset_device(deviceHandle))
 	{
-		Interface::Print("Resetting device...\n");
-		if (libusb_reset_device(deviceHandle))
-		{
-			Interface::PrintError("Failed to reset device!\n");
-		}
+		Interface::PrintError("Failed to reset device!\n");
 	}
-#endif
 
 	if (!SendBulkTransfer(dataBuffer, 4, 1000))
 	{
@@ -1245,31 +1240,3 @@ void BridgeManager::SetUsbLogLevel(UsbLogLevel usbLogLevel)
 	}
 }
 
-#ifdef OS_LINUX
-bool BridgeManager::IsUbuntu()
-{
-	std::ifstream os_release("/etc/os-release");
-	std::string line, entry, os;
-	int pos;
-	while (std::getline(os_release, line))
-	{
-		pos = line.find("=");
-		entry = line.substr(0, pos);
-		if (entry == "ID")
-		{
-			os = line.substr(pos+1);
-			if (verbose)
-			{
-				Interface::Print("Linux distro ID: %s\n",
-						 os.c_str());
-			}
-			if (os == "ubuntu")
-			{
-				return true;
-			}
-			break;
-		}
-	}
-	return false;
-}
-#endif
